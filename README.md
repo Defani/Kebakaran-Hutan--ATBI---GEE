@@ -4,21 +4,8 @@
 
 ---
 
-## Daftar Isi
-
-- [Latar Belakang](#latar-belakang)
-- [Landasan Teori](#landasan-teori)
-- [Formulasi Matematis](#formulasi-matematis)
-- [Klasifikasi Keparahan](#klasifikasi-keparahan)
-- [Perbandingan dATBI vs dNBR](#perbandingan-datbi-vs-dnbr)
-- [Struktur Kode](#struktur-kode)
-- [Cara Penggunaan](#cara-penggunaan)
-- [Output](#output)
-- [Keterbatasan](#keterbatasan)
-- [Daftar Pustaka](#daftar-pustaka)
-
+*Script GEE: https://code.earthengine.google.com/330ea07830bdf414b5f28e05baa426f6*
 ---
-
 ## Latar Belakang
 
 Kebakaran hutan merupakan salah satu gangguan ekologis dan klimatik terbesar di Bumi, berdampak pada dinamika gas rumah kaca, distribusi vegetasi, dan komunitas manusia (Goldammer et al., 2008; Kloster et al., 2012). Kejadian kebakaran baru-baru ini menegaskan meningkatnya keparahan dan skala kebakaran secara global akibat perubahan iklim (Bowman et al., 2020; Liu et al., 2014).
@@ -112,68 +99,66 @@ $$\text{dATBI} = \text{ATBI}_{\text{pre}} - \text{ATBI}_{\text{post}} \tag{2}$$
 
 Untuk setiap citra pasca-kebakaran pada waktu $t$ ($t = 1, \ldots, n$):
 
-$$D_t(x,y) = \text{ATBI}_{\text{pre}}(x,y) - \text{ATBI}_{\text{post}(t)}(x,y) \tag{3}$$
+$$
+D_t(x,y) = \text{ATBI}_{\text{pre}}(x,y) - \text{ATBI}_{\text{post}(t)}(x,y)
+$$
 
-Masker kebakaran biner dengan ambang batas $T$ (dATBI $\geq 0.20$):
+Masker kebakaran biner dengan ambang batas $T$ (dATBI ≥ 0.20):
 
-$$M_t(x,y) = \begin{cases} 1, & \text{jika } D_t(x,y) \geq T \\ 0, & \text{sebaliknya} \end{cases} \tag{4}$$
+$$
+M_t(x,y) =
+\begin{cases}
+1, & \text{jika } D_t(x,y) \geq T \\
+0, & \text{sebaliknya}
+\end{cases}
+$$
 
 Jumlah deteksi kebakaran per piksel:
 
-$$K(x,y) = \sum_{t=1}^{n} M_t(x,y) \tag{5}$$
+$$
+K(x,y) = \sum_{t=1}^{n} M_t(x,y)
+$$
+
 
 ### 5. Temporal Mean Burned Area Composite (dATBItm)
 
-$$\text{dATBI}_{tm}(x,y) = \begin{cases} \dfrac{1}{K(x,y)} \displaystyle\sum_{t=1}^{n} D_t(x,y) \cdot M_t(x,y), & \text{jika } K(x,y) \geq 1 \\ \text{null}, & \text{sebaliknya} \end{cases} \tag{6}$$
+$$
+\text{dATBI}_{tm}(x,y) =
+\begin{cases}
+\dfrac{1}{K(x,y)} \sum_{t=1}^{n} D_t(x,y) \cdot M_t(x,y), & \text{jika } K(x,y) \geq 1 \\
+\text{null}, & \text{sebaliknya}
+\end{cases}
+$$
+
 
 ### 6. Differenced NBR (dNBR) — Pembanding
 
-$$\text{NBR} = \frac{\text{NIR} - \text{SWIR}}{\text{NIR} + \text{SWIR}}$$
+$$
+\text{NBR} = \frac{\text{NIR} - \text{SWIR}}{\text{NIR} + \text{SWIR}}
+$$
 
-$$\text{dNBR} = \text{NBR}_{\text{pre}} - \text{NBR}_{\text{post}} \tag{7}$$
+$$
+\text{dNBR} = \text{NBR}_{\text{pre}} - \text{NBR}_{\text{post}}
+$$
+
 
 ### 7. Metrik Validasi
 
-**Presisi** (meminimalkan deteksi palsu):
+$$
+\text{Precision} = \frac{TP}{TP + FP}
+$$
 
-$$\text{Precision} = \frac{TP}{TP + FP} \tag{13}$$
+$$
+\text{Recall} = \frac{TP}{TP + FN}
+$$
 
-**Recall** (mendeteksi semua area terbakar):
+$$
+\text{F1 Score} = \frac{2 \cdot (\text{Precision} \cdot \text{Recall})}{\text{Precision} + \text{Recall}}
+$$
 
-$$\text{Recall} = \frac{TP}{TP + FN} \tag{14}$$
-
-**F1-Score** (keseimbangan presisi dan recall):
-
-$$\text{F1 Score} = \frac{2 \times (\text{Precision} \times \text{Recall})}{\text{Precision} + \text{Recall}} \tag{15}$$
-
-**Indeks Separabilitas (M)** — Jarak Jeffries-Matusita:
-
-$$M = \frac{|\mu_b - \mu_{ub}|}{\sigma_b + \sigma_{ub}} \tag{16}$$
-
-dimana:
-- $\mu_b$, $\mu_{ub}$ = nilai rata-rata kelas terbakar dan tidak terbakar
-- $\sigma_b$, $\sigma_{ub}$ = standar deviasi kelas terbakar dan tidak terbakar
-- $M > 1.0$ = separabilitas kelas baik (overlap histogram minimal)
-- $M < 1.0$ = diskriminasi buruk
-
----
-
-## Klasifikasi Keparahan
-
-Ambang batas keparahan kebakaran yang digunakan dalam studi ini merupakan modifikasi dari ambang batas dNBR konvensional (Key & Benson, 2006; Eidenshink et al., 2007), disesuaikan untuk mengurangi kesalahan komisi:
-
-| Tingkat Keparahan | Ambang dNBR Konvensional | Ambang Dimodifikasi (studi ini) |
-|---|---|---|
-| Tidak terbakar (*Unburned*) | < 0.10 | **< 0.20** |
-| Keparahan rendah (*Low severity*) | 0.10 – 0.27 | **0.20 – 0.27** |
-| Keparahan sedang (*Moderate severity*) | 0.27 – 0.66 | 0.27 – 0.66 |
-| Keparahan tinggi (*High severity*) | > 0.66 | > 0.66 |
-
-> **Catatan:** Penyesuaian ambang "tidak terbakar" dari 0.10 ke 0.20 bertujuan mengecualikan perubahan spektral halus akibat asap, fenologi, atau tanah terbuka yang bukan merupakan kebakaran nyata. dATBI tetap stabil di bawah kedua skema ambang batas, sedangkan dNBR memerlukan penyesuaian manual (Bilal, 2025).
-
----
-
-## Perbandingan dATBI vs dNBR
+$$
+M = \frac{|\mu_b - \mu_{ub}|}{\sigma_b + \sigma_{ub}}
+$$
 
 ### Hasil Validasi (Park Fire 2024, California)
 
